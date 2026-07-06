@@ -1,0 +1,86 @@
+= LLM Bash Runtime Utility Manual
+:author: Landon R
+:doctype: book
+:toc: macro
+:toclevels: 3
+:source-highlighter: rouge
+
+toc::[]
+
+== Overview & Architectural Purpose
+The `LLM.bash` script acts as an automated, on-demand orchestration controller for running Large Language Models inside a WSL-2 environment. 
+
+This layout features a **self-healing auto-mount architecture**. If the underlying storage filesystem has not yet been introduced to the active Linux distribution, the script automatically establishes the required directory hooks and mounts the Windows host drive over the network layer on-the-fly.
+
+[IMPORTANT]
+====
+This controller script isolates the runtime lifecycle from your automatic system startup tables. The central `ollama.service` should remain explicitly disabled (`sudo systemctl disable ollama`) to prevent background GPU memory or context pipeline leakage during intensive gaming or rendering tasks.
+====
+
+== Core Path Layout Dependencies
+The automated scripts map variables based on the following local environment paths:
+
+[horizontal]
+Shared Mount Layer:: `/mnt/wsl/models_storage` (Shared globally across all distribution subsystems)
+Target Deployment Link:: `/opt/models` (The location where the Ollama engine parses model binaries)
+Service Network Port:: `127.0.0.1:11434` (The localized loopback API address)
+
+== Script Implementation Source
+
+The complete active orchestration code block is maintained inside the companion repository file. It is injected into this system manual via direct relative reference extraction:
+
+[source,bash]
+----
+include::LLM.bash[]
+----
+
+== Functional Specification Breakdown
+
+=== 1. check-llm-mount
+Directly handles the automated self-healing file attachment workflows.
+
+* *Auto-Mount Phase:* Scans the kernel mount tables. If the shared mount layer is missing, it dynamically creates `/mnt/wsl/models_storage` and forces a silent background `drvfs` attachment to the host `M:` partition.
+* *Verification Phase:* Re-interrogates the mount list. If the host volume cannot be resolved (e.g., `MountLLM` was not run on the host), it drops a critical red warning window and halts execution to protect system stability.
+
+=== 2. get-llm-vram
+A modular hardware telemetry function.
+
+* *Behavioral Check:* Interfaces directly with the local `nvidia-smi` abstraction layer to parse hardware constraints on your graphic card pipelines.
+* *Telemetry Output:* Computes active VRAM mathematical metrics on the fly, formatting and printing a clean consumption map showing exact Gigabyte utilization (e.g., `X.XX GB / 15.92 GB allocated`).
+* *Fallback Layer:* Gracefully falls back to auditing standard system RAM tables via `free -h` if the CUDA sub-layer fails to respond.
+
+=== 3. start-llm
+The primary user execution interface hook. Accepts an optional string argument to dictate the model targeted for launch (defaults internally to `llama3` if empty).
+
+* *Step 1:* Invokes the self-healing `check-llm-mount` routing function.
+* *Step 2:* Validates target deployment link paths.
+* *Step 3:* Implements single-instance protection checks to verify whether a storage bind is already processing. If it is active, it fast-forwards cleanly without stacking duplicate file arrays.
+* *Step 4:* Calls safe `find` prune engines to remap folder privileges to the service runtime daemon account while safely dodging locked NTFS system directories.
+* *Step 5:* Boots the `systemctl` background process on-demand.
+* *Step 6:* Enters a loopback socket verification test checking `/dev/tcp/127.0.0.1/11434` every 500 milliseconds until the API layer answers.
+* *Step 7:* Pulls live hardware tracking telemetry logs via `get-llm-vram`.
+* *Step 8:* Triggers the interactive client engine interface.
+* *Step 9:* Triggers the `stop-llm` cleanup process immediately upon terminal workspace exit.
+
+=== 4. stop-llm
+The environment isolation and teardown coordinator.
+
+* *Multi-Instance Protection:* Scans active network connections via `ss -tna` to detect open TCP loops pointing to the local API port. 
+* *Conditional Logic:* If separate windows are actively chatting with models, it exits safely while keeping the underlying storage pool online for those tabs. If it evaluates that the current window is the absolute last connection alive, it completes a full teardown, stops the daemon process, and fully unmounts `/opt/models`.
+
+== Streamlined Stream-lined 2-Step Workflow
+
+With auto-mounting integrated, manual disk indexing is fully eliminated from your routine:
+
+. **Windows Host:** Launch an elevated PowerShell window and invoke your shortcut alias:
++
+[source,powershell]
+----
+MountLLM
+----
+. **WSL-2 Client:** Open any terminal distribution shell and immediately invoke your runtime:
++
+[source,bash]
+----
+start-llm
+----
