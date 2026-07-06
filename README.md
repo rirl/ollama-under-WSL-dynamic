@@ -4,6 +4,17 @@
 > **REPOSITORY LOCATION**  
 > The complete codebase for the `LLMStorage` PowerShell modules, along with companion Linux environment setup utilities, can be cloned or contributed to directly on GitHub at [ollama-under-WSL-dynamic](https://github.com).
 
+## 🚀 Windows Host Quick Reference (`LLMStorage.psm1`)
+When working on your Windows host, you can use these native PowerShell commands to manage your virtual block storage array. **All mounting actions require an elevated Administrator session.**
+
+| Function Name | Short-Hand Alias | Admin Required? | Description |
+| :--- | :--- | :---: | :--- |
+| `Mount-LLMStorage` | **`MountLLM`** | **Yes** | Attaches the pre-allocated VHDX container file and maps it cleanly to the host `M:` drive. |
+| `Dismount-LLMStorage` | *None* | **Yes** | Gracefully flushes and detaches the virtual drive from the OS to protect against model weight database corruption. |
+| `Get-LLMStorageStatus` | *None* | No | Queries the host kernel to dump live storage size metrics, free space, and attachment health states. |
+
+---
+
 > [!WARNING]
 > **CRITICAL ARCHITECTURAL REQUIREMENT**  
 > This module **does not** create, initialize, or format virtual disk containers. It operates under the strict assumption that the target VHDX file (`D:\LocalLLM\models_storage.vhdx`) has **already been manually created, partitioned, and pre-allocated as a FIXED-size disk image** with an established filesystem (e.g., NTFS or exFAT) ready for host attachment. Attempting to mount an uninitialized or dynamic file will result in storage discovery faults.
