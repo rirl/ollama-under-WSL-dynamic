@@ -1,0 +1,101 @@
+Analyze this repository and implement the minimal changes needed to make shared Ollama lifecycle management safe across multiple WSL distributions.
+
+Context:
+
+* Ollama model data is stored on a VHDX volume mounted from Windows into WSL.
+* Multiple WSL distributions may share the same mounted LLM volume and Ollama service lifecycle.
+* The current cleanup logic uses `ss` and `ESTAB` socket state to decide when Ollama has no connected clients.
+* That works for one WSL distro and one active Ollama session, but fails when a client is idle at the LLM prompt because an idle prompt may have no established Ollama socket.
+* `TIME-WAIT` sockets are not active clients.
+* `SYN-RECV` should be treated as “do not clean up yet” because a new connection is in progress.
+* The VHDX mount is authoritative: if the mounted LLM volume is unavailable under WSL, Ollama must be stopped and disabled.
+* The mounted LLM volume should also store shared session/lease state so all WSL distributions see the same active-session registry.
+
+Goals:
+
+1. Read the documentation first and infer the intended architecture.
+2. Review the Bash and PowerShell scripts that mount/unmount the VHDX, start/stop Ollama, and coordinate WSL distributions.
+3. Preserve the current design as much as possible.
+4. Add a shared lease/session mechanism on the mounted LLM volume.
+5. Keep `ss` socket checks, but treat them as active/connecting request checks only.
+6. Do not disable Ollama unless:
+
+   * the LLM volume is mounted,
+   * no active or connecting Ollama sockets exist,
+   * no live session leases exist across the shared LLM volume,
+   * and the clean condition remains stable for the configured grace period/check count.
+7. If the LLM volume is not mounted, fail closed:
+
+   * stop Ollama,
+   * disable Ollama,
+   * refuse new sessions,
+   * do not rely on stale local state.
+8. Prefer a common Bash lease manager stored on or installed from the shared LLM volume, usable by all WSL distributions.
+9. Use sudo only for the narrow privileged service lifecycle operations, not for ordinary lease-file operations.
+
+Expected implementation direction:
+
+* Add a hidden control directory on the mounted LLM volume, without moving existing Ollama model data:
+
+  `.ollama-control/`
+
+  * `sessions/`
+  * `draining`
+  * `enabled`
+  * `lock`
+  * optionally `bin/`
+
+* Implement a common lease manager with operations like:
+
+  * `acquire`
+  * `heartbeat`
+  * `release`
+  * `list`
+  * `reap-stale`
+  * `has-live-sessions`
+
+* Prefer simple portable lease files over JSON unless the repository already depends on `jq`.
+
+  Example lease fields:
+
+  * `SESSION_ID`
+  * `DISTRO`
+  * `PID`
+  * `STARTED_AT`
+  * `LAST_SEEN`
+  * `STATE`
+
+* Use `flock` or an equivalent lock around lease registry changes.
+
+* Add cleanup logic for stale leases.
+
+* Treat a lease as live if the owning process is still alive or its heartbeat is fresh enough.
+
+* Ensure idle prompt sessions hold a lease even when no Ollama TCP connection is established.
+
+* Update wrappers so leases are acquired when a session starts and released when the session exits, including signal/trap cleanup.
+
+* During drain/shutdown, refuse new sessions, wait for active sockets and leases to clear, then stop and disable Ollama.
+
+* Keep service management isolated behind a small function or script that uses sudo only where required.
+
+* Update documentation to describe the new lifecycle, invariants, and failure behavior.
+
+Important invariants:
+
+* Ollama may run only while the LLM VHDX volume is mounted.
+* The shared LLM volume is the authority for model data and session state.
+* Idle prompt sessions are represented by leases, not sockets.
+* Active requests are represented by `ESTAB` sockets.
+* New connecting clients are represented by `SYN-RECV` sockets.
+* `TIME-WAIT` alone must not keep Ollama alive.
+* Cleanup must be idempotent and safe to run repeatedly.
+* Do not perform a broad redesign unless the existing code makes the minimal change impossible.
+
+Deliverables:
+
+1. A concise architecture/readme update.
+2. The implemented Bash/PowerShell changes.
+3. Tests or script-level validation checks where practical.
+4. A short summary of what changed and why.
+5. Any remaining risks or assumptions.
