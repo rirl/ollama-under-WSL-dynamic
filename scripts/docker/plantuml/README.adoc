@@ -1,0 +1,36 @@
+= PlantUML Docker Helper
+
+== Build and Start
+
+[source,bash]
+----
+./start-plantuml-container.bash
+----
+
+== Render All SVG
+
+[source,bash]
+----
+./render-plantuml.bash svg
+----
+
+== Render All PNG
+
+[source,bash]
+----
+./render-plantuml.bash png
+----
+
+== Render One File
+
+[source,bash]
+----
+./render-plantuml.bash svg refactor/uml/shared-session-manager-component.puml
+----
+
+== Stop
+
+[source,bash]
+----
+docker rm -f plantuml-cli
+----
