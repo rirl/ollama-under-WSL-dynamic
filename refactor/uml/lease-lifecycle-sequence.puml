@@ -1,0 +1,36 @@
+@startuml
+title Session Lease Lifecycle
+
+skinparam shadowing false
+
+actor User
+participant "WSL Session Wrapper\nLLM.bash" as Wrapper
+participant "Lease Manager" as Lease
+database "LLM Volume\n.ollama-control/sessions" as Sessions
+participant "Ollama Service" as Ollama
+
+User -> Wrapper : start LLM session
+Wrapper -> Wrapper : verify LLM volume mounted
+Wrapper -> Lease : acquire
+Lease -> Sessions : create lease file\nSESSION_ID, DISTRO, PID,\nSTARTED_AT, LAST_SEEN, STATE
+Lease --> Wrapper : lease acquired
+
+Wrapper -> Ollama : client request(s)
+Ollama --> Wrapper : response(s)
+
+loop while prompt/session remains open
+  Wrapper -> Lease : heartbeat
+  Lease -> Sessions : update LAST_SEEN
+end
+
+User -> Wrapper : exit prompt/session
+Wrapper -> Lease : release
+Lease -> Sessions : remove lease file
+Wrapper --> User : session closed
+
+note over Wrapper,Sessions
+Idle prompts remain visible through leases
+even when no Ollama TCP socket is established.
+end note
+
+@enduml
