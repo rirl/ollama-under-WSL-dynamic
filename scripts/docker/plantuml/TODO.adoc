@@ -1,0 +1,253 @@
+= TODO
+:toc:
+:sectnums:
+
+This document captures improvements identified during the initial validation
+of the Docker-based PlantUML tooling.
+
+The current implementation successfully renders PlantUML diagrams and provides
+a reusable Docker-based rendering environment. The items below represent
+engineering improvements discovered during validation rather than correctness
+issues.
+
+== Completed
+
+=== Render PlantUML Using the Bundled JAR
+
+Status:: Complete
+
+The rendering scripts now invoke:
+
+[source,bash]
+----
+java -jar /opt/plantuml.jar
+----
+
+rather than assuming a `plantuml` executable exists on the container PATH.
+
+This aligns with the current `plantuml/plantuml` Docker image layout.
+
+== TODO
+
+=== Run the Container as the Calling User
+
+Priority:: High
+
+Currently the container executes as `root`.
+
+Generated SVG and PNG files therefore become owned by `root:root`
+within the mounted Git repository.
+
+Investigate running the container using the invoking user's UID and GID.
+
+Potential approach:
+
+[source,bash]
+----
+docker run \
+    --user "$(id -u):$(id -g)" \
+    ...
+----
+
+Expected benefits:
+
+* Generated files owned by the calling user.
+* No manual ownership correction.
+* Better integration with Git working trees.
+
+Potential concerns:
+
+* Verify Java continues to execute correctly.
+* Verify Graphviz operates correctly.
+* Verify mounted volume permissions remain compatible.
+
+=== Separate UML Sources from Generated Artifacts
+
+Priority:: Medium
+
+Currently generated SVG and PNG files are written beside the
+PlantUML source files.
+
+Current layout:
+
+----
+uml/
+    *.puml
+    *.svg
+    *.png
+----
+
+Consider generating into a dedicated output directory.
+
+Possible layouts:
+
+----
+artifacts/
+    uml/
+        svg/
+        png/
+----
+
+or
+
+----
+build/
+    uml/
+        svg/
+        png/
+----
+
+Benefits:
+
+* Clear separation between source and generated artifacts.
+* Easier Git ignore policy.
+* Simpler cleanup.
+* Cleaner repository layout.
+* Easier publication of documentation artifacts.
+
+=== Configurable Output Directory
+
+Priority:: Medium
+
+Allow the render scripts to specify an output directory.
+
+Possible implementation:
+
+* environment variable
+* command-line option
+
+Example:
+
+----
+PLANTUML_OUTPUT_DIR
+----
+
+This would make the renderer independent of repository layout.
+
+=== Verify Render Exit Status
+
+Priority:: Medium
+
+Confirm the render scripts explicitly fail if PlantUML reports an error.
+
+Possible improvements include:
+
+* checking exit status
+* reporting generated file counts
+* detecting partial failures
+* summarizing rendered output
+
+=== Improve Script Naming
+
+Priority:: Low
+
+Current script:
+
+----
+start-plantuml-container.bash
+----
+
+performs multiple actions:
+
+* build image
+* remove existing container
+* create container
+* start container
+
+Consider renaming to better reflect its behavior.
+
+Possible alternatives:
+
+* build-and-start-plantuml.bash
+* rebuild-plantuml-container.bash
+
+or split into:
+
+* build-image.bash
+* start-container.bash
+* stop-container.bash
+
+=== Add Clean Script
+
+Priority:: Low
+
+Provide a helper script to remove generated artifacts.
+
+Possible script:
+
+----
+clean-rendered-artifacts.bash
+----
+
+Possible behavior:
+
+* remove generated SVG
+* remove generated PNG
+* preserve PlantUML source
+
+=== Support Additional Output Formats
+
+Priority:: Low
+
+Current supported formats include:
+
+* svg
+* png
+* pdf
+* eps
+* txt
+* utxt
+
+Evaluate whether repository workflows would benefit from additional
+formats or export options.
+
+=== Investigate Empty PDF Output
+
+Priority:: Low
+
+Rendering PlantUML diagrams as PDF currently produces empty or unusable
+PDF files in the Docker container.
+
+SVG rendering has been validated and is the preferred output format
+for the current workflow.
+
+Potential areas for investigation include:
+
+* missing Graphviz runtime components
+* missing fonts
+* PlantUML PDF backend behavior
+* Docker image packaging
+* format-specific rendering limitations
+
+This issue should not block current validation work.
+
+=== Continuous Validation
+
+Priority:: Low
+
+Consider adding a validation script that:
+
+* renders every `.puml`
+* verifies successful generation
+* reports failures
+* optionally compares generated artifacts against committed versions
+
+This could later become part of CI.
+
+== Future Considerations
+
+The current PlantUML tooling provides the foundation for a reusable
+documentation generation framework.
+
+Potential future additions include:
+
+* Graphviz
+* Mermaid
+* Asciidoctor PDF
+* Asciidoctor Diagram
+* Kroki
+* documentation validation
+* automated documentation publishing
+
+The long-term goal is to establish a consistent, reproducible
+documentation pipeline that can be reused across repositories.

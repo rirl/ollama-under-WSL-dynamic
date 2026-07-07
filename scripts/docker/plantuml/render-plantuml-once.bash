@@ -5,8 +5,9 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 GIT_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
 FORMAT="${1:-svg}"
-TARGET="${2:-refactor/uml/*.puml}"
+TARGET="${2:-uml/*.puml}"
 IMAGE_NAME="${PLANTUML_IMAGE_NAME:-local/plantuml-cli}"
+PLANTUML_JAR="${PLANTUML_JAR:-/opt/plantuml.jar}"
 
 case "$FORMAT" in
   svg|png|pdf|eps|txt|utxt)
@@ -25,4 +26,4 @@ docker run --rm \
   -w /work \
   --entrypoint sh \
   "$IMAGE_NAME" \
-  -lc "plantuml -t${FORMAT} ${TARGET}"
+  -lc "java -jar ${PLANTUML_JAR} -t${FORMAT} ${TARGET}"
