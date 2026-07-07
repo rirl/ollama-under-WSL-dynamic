@@ -1,0 +1,31 @@
+= Shared Session Manager Validation Notes
+:toc:
+
+== Static Validation
+
+[source,bash]
+----
+bash -n LLM.bash
+----
+
+== Manual Acceptance Checks
+
+. Mount the LLM VHDX from Windows with `MountLLM`.
+. Start one WSL session with `start-llm`.
+. Confirm a lease exists under `/mnt/wsl/models_storage/.ollama-control/sessions`.
+. Leave that session idle at the LLM prompt.
+. From a second WSL shell, run `stop-llm`.
+. Verify Ollama remains running because the live lease exists.
+. Exit the idle prompt.
+. Verify the lease is removed.
+. Run `stop-llm` again and verify Ollama stops and disables only after no leases and no active/connecting sockets remain.
+
+== PowerShell Guard Check
+
+[source,powershell]
+----
+Get-ActiveLLMSessionLeases
+Dismount-LLMStorage
+----
+
+`Dismount-LLMStorage` should refuse to dismount when fresh leases exist unless `-Force` is used.
