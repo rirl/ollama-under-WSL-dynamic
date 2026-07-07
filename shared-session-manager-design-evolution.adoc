@@ -1,0 +1,355 @@
+= Shared Session Manager Design Evolution
+
+An engineering record describing the evolution of the shared session
+manager architecture from initial concept through implementation,
+including the architectural investigations and design decisions that
+led to the current implementation.
+
+:toc:
+:sectnums:
+
+== Overview
+
+This document summarizes the evolution of the shared Ollama session manager
+through the current state of the `research/shared-session-manager` branch.
+
+The work intentionally followed an iterative engineering process:
+
+* establish a reproducible baseline
+* formulate an implementation hypothesis
+* preserve intermediate reasoning
+* construct architectural models
+* perform platform research
+* revise the architecture based upon evidence
+* implement the revised design
+
+Rather than treating Git purely as source control, the branch was used as an
+engineering notebook in which each significant refinement of understanding was
+preserved.
+
+== Motivation
+
+The original objective was to make a shared Ollama installation usable across
+multiple WSL2 distributions while ensuring that:
+
+* the LLM models reside on a Windows-mounted VHDX
+* Ollama executes only while that volume is available
+* idle prompt sessions are not mistaken for inactive clients
+* multiple WSL distributions cooperate safely
+* shutdown is deterministic and idempotent
+
+The initial implementation relied primarily upon TCP socket state
+(`ss`, `ESTAB`, etc.) to determine whether Ollama could safely be stopped.
+
+Testing quickly revealed that idle prompt sessions often have no established
+TCP connection despite remaining active from the user's perspective.
+
+This observation motivated the introduction of a shared session lease model.
+
+== Engineering Process
+
+=== Stage 1 — Baseline Preservation
+
+Commit:
+
+----
+87f3067
+docs: add repository archive to LFS as implementation baseline
+----
+
+Before modifying the implementation, the current repository was archived to
+provide a reproducible baseline.
+
+This establishes a permanent reference point for later comparison.
+
+=== Stage 2 — Initial Refactoring Plan
+
+Commit:
+
+----
+e1b10f8
+docs: capture shared session manager refactoring plan
+----
+
+The initial design proposed:
+
+* shared session registry
+* graceful shutdown
+* coordination across WSL distributions
+* VHDX-controlled lifecycle
+
+=== Stage 3 — Proposed Implementation
+
+Commit:
+
+----
+f9613bb
+docs: archive proposed shared session manager implementation
+----
+
+A first implementation proposal was generated without immediately modifying the
+repository.
+
+The proposal was intentionally preserved separately to encourage review before
+implementation.
+
+=== Stage 4 — Refactoring Delta
+
+Commit:
+
+----
+7ff1b95
+docs: preserve shared session manager refactoring delta
+----
+
+The proposed implementation was expanded into concrete replacement files.
+
+These represented the first architectural hypothesis.
+
+=== Stage 5 — Initial Architecture
+
+Commit:
+
+----
+664e5db
+docs: add shared session manager UML refactoring artifacts
+----
+
+PlantUML diagrams were created describing:
+
+* components
+* lease lifecycle
+* shutdown sequence
+* service state
+* failure handling
+
+These diagrams reflected the first architectural model.
+
+=== Stage 6 — PlantUML Tooling
+
+Commits:
+
+----
+1b54746
+docs: add archive for PlantUML rendering in Docker
+
+ad57e1e
+build: add reusable PlantUML Docker toolchain
+----
+
+Reusable Docker tooling was introduced to render PlantUML diagrams directly
+from the repository.
+
+The tooling evolved toward:
+
+* repository-relative execution
+* reusable container
+* one-shot rendering
+* SVG/PNG generation
+
+This established a repeatable documentation workflow.
+
+=== Stage 7 — Platform Research
+
+Commit:
+
+----
+cb67257
+docs: capture WSL PID namespace research and validation artifacts
+----
+
+During implementation, an important architectural question emerged.
+
+Originally the lease manager assumed process validation could be based simply
+upon distribution-local PIDs.
+
+Further investigation showed that this assumption required validation.
+
+Research focused upon:
+
+* WSL2 architecture
+* Linux PID namespaces
+* namespace-local PIDs
+* root namespace PIDs
+* `NSpid`
+* process validation strategies
+
+This stage represented the most significant architectural refinement.
+
+The implementation shifted from assumption-driven design to
+evidence-driven design.
+
+== Architectural Findings
+
+The research established several important observations.
+
+=== Shared Kernel
+
+WSL2 executes all distributions on a single Linux kernel.
+
+=== PID Namespaces
+
+Each distribution executes within its own PID namespace.
+
+Namespace-local PIDs therefore cannot be assumed to be globally meaningful.
+
+=== NSpid
+
+Linux exposes namespace PID mappings through:
+
+----
+/proc/<pid>/status
+----
+
+using the `NSpid` field.
+
+This enables correlation between namespace-local PIDs and the root namespace.
+
+=== Session Identity
+
+No documented Windows or WSL mechanism was identified that provides a stable
+logical session identifier suitable for lease management.
+
+Consequently, the lease manager introduces its own logical:
+
+----
+SESSION_ID
+----
+
+independent of Linux PIDs.
+
+PIDs are treated solely as liveness evidence.
+
+== Revised Architecture
+
+The revised implementation introduces a shared control directory on the mounted
+LLM volume.
+
+----
+.ollama-control/
+
+    sessions/
+    lock
+    enabled
+    draining
+----
+
+Lease records now represent idle prompt sessions independently of TCP socket
+activity.
+
+Representative lease information includes:
+
+* SESSION_ID
+* DISTRO
+* LOCAL_PID
+* ROOT_NAMESPACE_PID (when available)
+* PID_NAMESPACE
+* STARTED_AT
+* LAST_SEEN
+* STATE
+
+Cleanup decisions now consider both:
+
+* network activity
+* lease activity
+
+rather than socket state alone.
+
+== PlantUML Architecture
+
+The architectural model was promoted from refactoring artifacts into canonical
+repository documentation.
+
+The repository now contains UML describing:
+
+* component architecture
+* lease manager
+* lease lifecycle
+* service lifecycle
+* shutdown sequence
+* VHDX failure handling
+
+These diagrams now represent the current architectural understanding rather
+than exploratory design.
+
+== Current Implementation
+
+Commit:
+
+----
+0d92581
+feat: implement shared session lease management infrastructure
+----
+
+The implementation now includes:
+
+* revised Bash coordination
+* revised PowerShell coordination
+* shared lease management
+* validation documentation
+* canonical UML
+* reusable PlantUML Docker tooling
+
+This represents the first integrated implementation of the revised design.
+
+== Engineering Observations
+
+An important lesson from this effort is that implementation and research were
+not separate activities.
+
+Instead the process followed a repeated cycle:
+
+----
+Observation
+    ↓
+Hypothesis
+    ↓
+Implementation
+    ↓
+Counterexample
+    ↓
+Research
+    ↓
+Architectural Revision
+    ↓
+Implementation
+----
+
+Git history therefore captures not only changes to the software but also the
+evolution of the architectural understanding.
+
+== Current Status
+
+The `research/shared-session-manager` branch now contains:
+
+* implementation
+* architectural documentation
+* UML
+* validation guidance
+* documentation tooling
+
+The branch should now be considered a research implementation rather than a
+completed feature.
+
+Further work should focus on validating the implementation under multiple WSL2
+distributions, confirming lease behavior under failure conditions, and deciding
+whether the resulting architecture is suitable for promotion into the
+`development` branch.
+
+== Conclusion
+
+The resulting architecture is substantially stronger than the initial proposal.
+
+Most importantly, architectural decisions are now grounded in documented Linux
+kernel behavior and experimentally validated WSL2 characteristics rather than
+assumptions.
+
+This research process also established a repeatable pattern for future KIOS
+work:
+
+* preserve the baseline
+* document the hypothesis
+* prototype the implementation
+* perform targeted platform research
+* revise the architecture based on evidence
+* promote only the validated design into the canonical implementation
