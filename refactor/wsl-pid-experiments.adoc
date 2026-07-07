@@ -1,0 +1,294 @@
+= WSL Process Namespace Experiment
+:toc:
+:sectnums:
+
+== Purpose
+
+Determine how Linux process identifiers (PIDs) behave across multiple WSL 2 distributions.
+
+Specifically, determine whether:
+
+* PIDs are globally unique across all WSL distributions.
+* Each distribution has its own independent PID namespace.
+* Processes from one distribution are visible from another distribution.
+* A PowerShell coordinator should identify a process by:
+** PID
+** Distribution + PID
+** or another mechanism.
+
+This experiment intentionally avoids assumptions and instead observes the behavior of a running WSL system.
+
+== Environment
+
+Record the environment before beginning.
+
+[source,bash]
+----
+wsl --version
+----
+
+[source,powershell]
+----
+wsl --list --verbose
+----
+
+Record:
+
+* Windows version
+* WSL version
+* Kernel version
+* Installed distributions
+
+== Test Setup
+
+For this experiment use two distributions.
+
+Example:
+
+* Ubuntu-24.04
+* Debian
+
+The actual distribution names are not important.
+
+== Experiment 1 - Interactive Shell PID
+
+Open a terminal in the first distribution.
+
+[source,bash]
+----
+echo "Ubuntu PID: $$"
+
+sleep 600
+----
+
+Leave the terminal running.
+
+Open a second distribution.
+
+[source,bash]
+----
+echo "Debian PID: $$"
+
+sleep 600
+----
+
+Record:
+
+[cols="1,1"]
+|===
+|Distribution |PID
+
+|
+|
+
+|
+|
+|===
+
+Questions:
+
+* Are the PIDs identical?
+* Are they different?
+
+== Experiment 2 - Process Visibility
+
+While both terminals remain running, from Ubuntu execute:
+
+[source,bash]
+----
+ps -ef
+----
+
+Question:
+
+Can Ubuntu see the Debian shell process?
+
+Record the PID.
+
+Repeat from Debian.
+
+[source,bash]
+----
+ps -ef
+----
+
+Question:
+
+Can Debian see the Ubuntu shell process?
+
+== Experiment 3 - Process Namespace
+
+From Ubuntu execute:
+
+[source,bash]
+----
+ps -eo pid,ppid,comm
+----
+
+Locate:
+
+* bash
+* sleep
+
+Repeat from Debian.
+
+Questions:
+
+* Are both distributions reporting the same process table?
+* Does each distribution report only its own processes?
+
+== Experiment 4 - Windows View
+
+From PowerShell execute:
+
+[source,powershell]
+----
+wsl --list --running
+----
+
+Record:
+
+* running distributions
+
+Next execute:
+
+[source,powershell]
+----
+Get-Process | Where-Object ProcessName -Match "wsl"
+----
+
+Record:
+
+* WSL host processes
+* PID values
+
+Question:
+
+Can Windows directly identify Linux processes?
+
+== Experiment 5 - Cross-Distro Validation
+
+Assume Ubuntu reported PID X.
+
+From PowerShell execute:
+
+[source,powershell]
+----
+wsl -d Ubuntu-24.04 -- bash -lc "kill -0 X"
+----
+
+Expected result:
+
+Exit status 0 if the process exists.
+
+Repeat using Debian.
+
+[source,powershell]
+----
+wsl -d Debian -- bash -lc "kill -0 X"
+----
+
+Question:
+
+Does the validation succeed?
+
+If Ubuntu's PID exists globally, Debian may also observe it.
+
+If the PID namespace is isolated, Debian should report failure.
+
+== Experiment 6 - Namespace Identity
+
+From both distributions execute:
+
+[source,bash]
+----
+readlink /proc/self/ns/pid
+----
+
+Record:
+
+[cols="1,1"]
+|===
+|Distribution |PID Namespace
+
+|
+|
+
+|
+|
+|===
+
+Question:
+
+Do both distributions report the same PID namespace inode?
+
+If they do, they are likely sharing a PID namespace.
+
+If they differ, each distribution has an independent PID namespace.
+
+== Experiment 7 - Init Process
+
+From each distribution execute:
+
+[source,bash]
+----
+ps -p 1 -f
+----
+
+Question:
+
+Is PID 1 the same process in both distributions?
+
+Record the command line.
+
+== Observations
+
+Record findings.
+
+=== PID Uniqueness
+
+*
+
+=== Process Visibility
+
+*
+
+=== Namespace
+
+*
+
+=== Cross-Distro Validation
+
+*
+
+=== Windows Coordination
+
+*
+
+== Architectural Conclusions
+
+Based solely on observed behavior.
+
+Determine whether lease validation should use:
+
+* PID only
+* Distribution + PID
+* Session identifier
+* Another mechanism
+
+== Follow-on Work
+
+If PIDs are globally unique:
+
+* Document the observation.
+* Search for Microsoft or Linux documentation confirming the behavior.
+
+If PIDs are distribution-local:
+
+* Use Distribution + PID as the lease validation key.
+
+If behavior is ambiguous:
+
+* Continue using a logical SESSION_ID.
+* Treat PID as an implementation detail rather than the primary identity.
+* Avoid depending on undocumented WSL implementation details.

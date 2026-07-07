@@ -1,0 +1,140 @@
+= Review Notes: WSL PID Mapping and Cross-Distribution Coordination
+:toc:
+:sectnums:
+
+== Overview
+
+This document records a technical review of the current WSL PID mapping analysis
+and suggests several improvements to clarify the distinction between documented
+platform behavior, Linux kernel mechanisms, and architectural implications for
+cross-distribution process coordination.
+
+Overall, the document is technically strong because it grounds its analysis in
+documented Linux kernel behavior rather than assumptions or folklore regarding
+WSL.
+
+== Review Comments
+
+=== 1. Clarify the `wsl.exe --system` Statement
+
+The statement:
+
+----
+"This opens a shell in the root namespace of the VM."
+----
+
+should be softened slightly.
+
+Suggested wording:
+
+----
+`wsl.exe --system` opens a shell in the WSL system distribution. From there it
+is possible to observe processes in the WSL VM's root PID namespace, subject to
+the privileges and namespace configuration of the system distribution.
+----
+
+Reason:
+
+Although `wsl.exe --system` is documented by Microsoft, the precise namespace
+relationship is primarily demonstrated through observation rather than explicitly
+specified in Microsoft's documentation.
+
+The examples later in the document provide good empirical evidence without
+requiring a stronger architectural claim.
+
+== 2. Distinguish Linux Behavior from WSL Behavior
+
+The document would benefit from explicitly separating Linux kernel features from
+their manifestation under WSL2.
+
+Suggested note:
+
+----
+NOTE: The `NSpid` field is a Linux kernel feature. WSL2 exposes this
+information because it runs an unmodified Linux kernel supporting PID
+namespaces.
+----
+
+Suggested note:
+
+----
+NOTE: The examples shown in this document were collected under WSL2.
+The namespace behavior itself is inherited from Linux and is not unique
+to WSL.
+----
+
+These additions make the provenance of the technical information clear.
+
+== 3. Add Architectural Implications
+
+The document currently explains how PID namespaces operate but stops short of
+explaining why this matters for software architecture.
+
+Suggested section:
+
+----
+== Implications for Cross-Distribution Process Management
+
+Because each WSL distribution executes within its own PID namespace,
+a PID observed inside one distribution should not be treated as a
+globally meaningful identifier.
+
+When coordinating processes across multiple WSL distributions,
+there are two practical approaches:
+
+* Validate the process inside the owning distribution.
+
+* Translate the namespace-local PID to the root namespace PID using
+  `NSpid`, then perform validation from the WSL system namespace.
+
+Which approach is preferable depends upon the architecture of the
+coordinator.
+----
+
+This intentionally explains the design consequences without prescribing a
+particular implementation.
+
+== 4. Prefer "Root Namespace PID"
+
+The phrase:
+
+----
+"the true global PID"
+----
+
+should be replaced with:
+
+----
+"the root namespace PID"
+----
+
+Reason:
+
+Both PID values are correct.
+
+They simply exist within different PID namespaces.
+
+Using Linux terminology avoids implying that one PID is somehow more
+correct than another.
+
+== Overall Assessment
+
+This document is technically well grounded.
+
+It correctly separates:
+
+* Linux kernel mechanisms (`struct pid`, PID namespaces, `NSpid`)
+* WSL2 architecture (shared kernel, multiple PID namespaces)
+* Observed runtime behavior
+* Engineering consequences
+
+The discussion is based upon documented Linux kernel behavior rather than
+assumptions about WSL internals.
+
+That provides a solid foundation for architectural decisions involving
+cross-distribution process coordination, such as a shared Ollama session
+manager or other multi-distribution infrastructure.
+
+The only remaining recommendation is to explicitly connect the documented
+kernel behavior with its architectural implications while avoiding stronger
+claims than the available documentation supports.
