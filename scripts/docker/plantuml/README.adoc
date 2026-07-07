@@ -1,36 +1,113 @@
-= PlantUML Docker Helper
+= PlantUML Docker Tooling
+:toc:
+:sectnums:
 
-== Build and Start
+== Purpose
+
+Render PlantUML diagrams from a Docker container while running commands from the
+Git repository root.
+
+The scripts may also be run from any subdirectory inside the repository because
+they locate the Git root automatically.
+
+== Expected Location
+
+[source,text]
+----
+scripts/docker/plantuml/
+  Dockerfile
+  start-plantuml-container.bash
+  render-plantuml.bash
+  render-plantuml-once.bash
+  stop-plantuml-container.bash
+  README.adoc
+----
+
+== Long-Running Container Workflow
+
+Start the container:
 
 [source,bash]
 ----
-./start-plantuml-container.bash
+./scripts/docker/plantuml/start-plantuml-container.bash
 ----
 
-== Render All SVG
-
-[source,bash]
-----
-./render-plantuml.bash svg
-----
-
-== Render All PNG
+Render all UML diagrams as SVG:
 
 [source,bash]
 ----
-./render-plantuml.bash png
+./scripts/docker/plantuml/render-plantuml.bash svg
 ----
 
-== Render One File
-
-[source,bash]
-----
-./render-plantuml.bash svg refactor/uml/shared-session-manager-component.puml
-----
-
-== Stop
+Render all UML diagrams as PNG:
 
 [source,bash]
 ----
-docker rm -f plantuml-cli
+./scripts/docker/plantuml/render-plantuml.bash png
+----
+
+Render one file:
+
+[source,bash]
+----
+./scripts/docker/plantuml/render-plantuml.bash svg refactor/uml/shared-session-manager-component.puml
+----
+
+Stop the container:
+
+[source,bash]
+----
+./scripts/docker/plantuml/stop-plantuml-container.bash
+----
+
+== One-Shot Workflow
+
+Build, render, and remove the container in one command:
+
+[source,bash]
+----
+./scripts/docker/plantuml/render-plantuml-once.bash svg
+----
+
+Render one file:
+
+[source,bash]
+----
+./scripts/docker/plantuml/render-plantuml-once.bash svg refactor/uml/lease-lifecycle-sequence.puml
+----
+
+== Defaults
+
+Default format:
+
+[source,text]
+----
+svg
+----
+
+Default target:
+
+[source,text]
+----
+refactor/uml/*.puml
+----
+
+== Supported Formats
+
+[source,text]
+----
+svg
+png
+pdf
+eps
+txt
+utxt
+----
+
+== Optional Environment Variables
+
+[source,bash]
+----
+PLANTUML_IMAGE_NAME=local/plantuml-cli
+PLANTUML_CONTAINER_NAME=plantuml-cli
 ----

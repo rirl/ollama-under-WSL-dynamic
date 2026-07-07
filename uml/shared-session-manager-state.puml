@@ -1,0 +1,43 @@
+@startuml
+title Shared Ollama Lifecycle State Machine
+
+skinparam shadowing false
+
+[*] --> Unmounted
+
+Unmounted : VHDX not mounted
+Unmounted : Ollama stopped/disabled
+Unmounted : New sessions refused
+
+Unmounted --> MountedDisabled : VHDX mounted
+
+MountedDisabled : model data available
+MountedDisabled : control directory available
+MountedDisabled : Ollama disabled
+
+MountedDisabled --> Running : user starts shared Ollama\nremove draining\nmark enabled\nstart service
+
+Running : accept sessions
+Running : active leases may exist
+Running : sockets may be ESTAB/SYN-RECV
+
+Running --> Draining : stop requested\nor idle cleanup begins
+
+Draining : refuse new sessions
+Draining : wait for no live leases
+Draining : wait for no ESTAB/SYN-RECV sockets
+Draining : require stable clean checks
+
+Draining --> MountedDisabled : safe stop\nstop service\ndisable service
+
+Running --> EmergencyStop : VHDX disappears
+Draining --> EmergencyStop : VHDX disappears
+MountedDisabled --> Unmounted : VHDX dismounted
+
+EmergencyStop : fail closed
+EmergencyStop : stop Ollama
+EmergencyStop : disable Ollama
+EmergencyStop : refuse sessions
+EmergencyStop --> Unmounted : cleanup complete
+
+@enduml

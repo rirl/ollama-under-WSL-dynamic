@@ -1,0 +1,59 @@
+@startuml
+title Lease Manager Conceptual Model
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class LeaseManager {
+  +acquire()
+  +heartbeat(session_id)
+  +release(session_id)
+  +list()
+  +reap_stale()
+  +has_live_sessions()
+}
+
+class Lease {
+  +SESSION_ID
+  +DISTRO
+  +PID
+  +STARTED_AT
+  +LAST_SEEN
+  +STATE
+}
+
+class SharedControlDirectory {
+  +sessions/
+  +draining
+  +enabled
+  +lock
+}
+
+class SocketGuard {
+  +has_active_or_connecting_sockets()
+}
+
+class ServiceManager {
+  +start()
+  +stop()
+  +enable()
+  +disable()
+}
+
+LeaseManager "1" --> "*" Lease : manages
+LeaseManager --> SharedControlDirectory : stores state
+LeaseManager --> SocketGuard : combines with socket state
+ServiceManager --> LeaseManager : asks safe-to-disable
+ServiceManager --> SocketGuard : checks ESTAB/SYN-RECV
+
+note right of SocketGuard
+ESTAB = active request/response
+SYN-RECV = connecting client
+TIME-WAIT = ignored for liveness
+end note
+
+note bottom of ServiceManager
+Uses sudo only for service lifecycle operations.
+end note
+
+@enduml

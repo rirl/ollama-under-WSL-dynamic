@@ -1,0 +1,32 @@
+@startuml
+title VHDX Dismount / Disappearance Failure Mode
+
+skinparam shadowing false
+
+actor "Windows/User" as Windows
+participant "PowerShell Coordinator\nLLMStorage.psm1" as PS
+participant "WSL Guard/Wrapper\nLLM.bash" as Bash
+participant "Ollama Service" as Ollama
+database "LLM VHDX Volume" as VHDX
+
+Windows -> PS : dismount VHDX
+PS -> Bash : request guard/cleanup
+
+Bash -> VHDX : mountpoint check
+
+alt volume still mounted
+  Bash -> Bash : normal drain path
+else volume missing
+  Bash -> Ollama : sudo stop ollama
+  Bash -> Ollama : sudo disable ollama
+  Bash -> Bash : refuse new sessions
+  Bash --> PS : failed closed
+end
+
+note over Bash,Ollama
+When the authoritative LLM volume disappears,
+the system does not attempt graceful session recovery.
+It stops and disables Ollama.
+end note
+
+@enduml

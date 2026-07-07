@@ -1,0 +1,48 @@
+@startuml
+title Safe Disable / Drain Flow
+
+skinparam shadowing false
+
+participant "Cleanup Command\nLLM.bash stop-llm" as Stop
+participant "Mounted LLM Volume" as Mount
+participant "Lease Manager" as Lease
+database ".ollama-control" as Control
+participant "ss socket check" as SS
+participant "systemd/sudo" as Systemd
+
+Stop -> Mount : verify mount exists
+
+alt mount missing
+  Stop -> Systemd : sudo stop ollama
+  Stop -> Systemd : sudo disable ollama
+  Stop --> Stop : fail closed
+else mount exists
+  Stop -> Control : create draining marker
+  loop until clean for configured checks
+    Stop -> Lease : reap-stale
+    Lease -> Control : remove dead/expired leases
+    Stop -> Lease : has-live-sessions?
+    Lease --> Stop : yes/no
+    Stop -> SS : check port 11434
+    SS --> Stop : ESTAB/SYN-RECV present?\nTIME-WAIT ignored
+
+    alt live lease or active/connecting socket exists
+      Stop -> Stop : wait/grace period
+    else clean
+      Stop -> Stop : increment clean count
+    end
+  end
+
+  Stop -> Systemd : sudo stop ollama
+  Stop -> Systemd : sudo disable ollama
+  Stop -> Control : remove enabled marker
+  Stop --> Stop : disabled safely
+end
+
+note bottom
+Disable condition:
+mounted AND no live leases AND no ESTAB/SYN-RECV sockets
+for the configured stable-clean window.
+end note
+
+@enduml

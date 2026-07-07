@@ -6,7 +6,7 @@ GIT_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
 FORMAT="${1:-svg}"
 TARGET="${2:-refactor/uml/*.puml}"
-CONTAINER_NAME="${PLANTUML_CONTAINER_NAME:-plantuml-cli}"
+IMAGE_NAME="${PLANTUML_IMAGE_NAME:-local/plantuml-cli}"
 
 case "$FORMAT" in
   svg|png|pdf|eps|txt|utxt)
@@ -18,6 +18,11 @@ case "$FORMAT" in
     ;;
 esac
 
-cd "$GIT_ROOT"
+docker build -t "$IMAGE_NAME" "$SCRIPT_DIR"
 
-docker exec "$CONTAINER_NAME" sh -lc "plantuml -t${FORMAT} ${TARGET}"
+docker run --rm \
+  -v "$GIT_ROOT:/work" \
+  -w /work \
+  --entrypoint sh \
+  "$IMAGE_NAME" \
+  -lc "plantuml -t${FORMAT} ${TARGET}"

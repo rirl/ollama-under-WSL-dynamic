@@ -1,0 +1,54 @@
+@startuml
+title Shared Ollama Session Manager - Component Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor "User" as user
+
+node "Windows Host" as windows {
+  component "PowerShell Coordinator\nLLMStorage.psm1" as ps
+  database "LLM VHDX\nmounted/dismounted by Windows" as vhdx
+}
+
+node "WSL Distro A" as wsl_a {
+  component "LLM.bash\nsession wrapper" as bash_a
+  component "Ollama Service\nsystemd" as ollama_a
+}
+
+node "WSL Distro B" as wsl_b {
+  component "LLM.bash\nsession wrapper" as bash_b
+  component "Ollama Client" as client_b
+}
+
+folder "Mounted LLM Volume" as mount {
+  folder "Ollama Model Data\nexisting root layout" as models
+  folder ".ollama-control" as control {
+    folder "sessions/" as sessions
+    file "draining" as draining
+    file "enabled" as enabled
+    file "lock" as lock
+  }
+}
+
+user --> ps : mount/start/stop/dismount
+ps --> vhdx : attach/detach
+vhdx --> mount : exposes shared volume
+
+bash_a --> control : acquire/release/check leases
+bash_b --> control : acquire/release/check leases
+bash_a --> ollama_a : sudo start/stop/enable/disable
+client_b --> ollama_a : API request\nlocalhost/WSL network
+ollama_a --> models : read model data
+
+note right of control
+Shared authority for session state.
+Every WSL distro sees the same leases.
+end note
+
+note bottom of ollama_a
+Ollama may run only while
+the LLM VHDX is mounted.
+end note
+
+@enduml

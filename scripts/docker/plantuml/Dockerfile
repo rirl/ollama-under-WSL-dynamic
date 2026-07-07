@@ -2,4 +2,4 @@ FROM plantuml/plantuml
 
 WORKDIR /work
 
-ENTRYPOINT ["sleep","infinity"]
+ENTRYPOINT ["sleep", "infinity"]
