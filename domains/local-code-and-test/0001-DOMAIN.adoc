@@ -1,0 +1,544 @@
+= Domain 0001 Local Code and Test
+
+:toc:
+:sectnums:
+
+This document defines the foundational domain model for governed local
+development, testing, and AI workspace lifecycle management.
+
+The model emerged from the implementation and validation work performed in the
+`ollama-under-WSL-dynamic` repository, but is intended to generalize beyond
+that implementation. The repository serves as the first reference
+implementation of this domain.
+
+
+== Core Insight
+
+The immediate problem began as a practical lifecycle issue:
+
+* Ollama model data resides on a mounted VHDX.
+* Multiple WSL distributions may share the same local LLM runtime.
+* Idle prompt sessions must not be mistaken for disconnected clients.
+* The Ollama service must be enabled only when the authoritative LLM volume is
+  available.
+* Cleanup must be safe, deterministic, and auditable.
+
+However, the work exposed a larger domain.
+
+The repository is modeling a local development environment in which code,
+runtime state, generated artifacts, validation evidence, and lifecycle policy
+must be coordinated across several execution contexts.
+
+This is directly relevant to KIOS because KIOS needs to reason about not only
+remote governance or abstract knowledge objects, but also local implementation
+work: code, tests, tools, runtimes, sessions, artifacts, and validation traces.
+
+== Emerging Domain Name
+
+A useful working name for the domain is:
+
+----
+Local Code and Test
+----
+
+A broader name is:
+
+----
+Local AI Workspace Lifecycle Management
+----
+
+The first name emphasizes the KIOS use case.
+
+The second name emphasizes the technical substrate uncovered by this repository.
+
+== Domain Boundary
+
+This domain concerns the governed lifecycle of a local development workspace.
+
+It includes:
+
+* source code
+* shell sessions
+* local services
+* local AI runtimes
+* mounted storage
+* generated artifacts
+* validation evidence
+* documentation tooling
+* lifecycle policy
+* cleanup behavior
+* failure handling
+
+It does not merely concern whether a process is running.
+
+It concerns whether the local workspace is in a valid, explainable, recoverable,
+and governable state.
+
+== Current Concrete Implementation
+
+The current repository realizes the domain through these technologies:
+
+[cols="1,2"]
+|===
+|Domain Concept |Concrete Implementation
+
+|Workspace
+|Mounted LLM VHDX and Git repository
+
+|Runtime
+|Ollama service under WSL
+
+|Execution Context
+|WSL distributions and Windows PowerShell
+
+|Session
+|Interactive LLM prompt or WSL client session
+
+|Lease
+|Shared session file under `.ollama-control/sessions/`
+
+|Coordinator
+|Bash and PowerShell scripts
+
+|Artifact Store
+|Mounted LLM volume, Git repository, generated UML
+
+|Validation Evidence
+|`validation.adoc`, shell checks, PlantUML render results
+
+|Lifecycle Policy
+|Start, enable, drain, stop, disable, refuse new sessions
+
+|Documentation Pipeline
+|PlantUML Docker tooling
+
+|Failure Mode
+|VHDX disappears, stale lease, idle prompt, active socket
+|===
+
+The concrete implementation is specific, but the conceptual model is more
+general.
+
+== Domain Vocabulary
+
+The emerging vocabulary is:
+
+=== Workspace
+
+A bounded local environment containing the resources required for development,
+testing, execution, validation, and documentation.
+
+In this repository, the workspace includes both the Git repository and the
+mounted LLM volume.
+
+=== Runtime
+
+A service or process that provides execution capability within the workspace.
+
+In this repository, the primary runtime is Ollama.
+
+Future examples could include:
+
+* local model servers
+* test databases
+* MCP servers
+* containerized services
+* documentation renderers
+* local CI runners
+
+=== Session
+
+A human- or tool-initiated interaction with a runtime or workspace.
+
+A session may be active even when it has no active socket connection.
+
+This distinction was critical in the Ollama case because an idle prompt may not
+hold an established TCP connection.
+
+=== Lease
+
+A durable declaration that a session still has a claim on a shared resource.
+
+A lease is not merely a process ID.
+
+It is a logical governance object that records session identity, liveness
+evidence, timestamps, state, and ownership context.
+
+=== Coordinator
+
+The component responsible for enforcing lifecycle rules across execution
+contexts.
+
+In this repository, coordination is split across Bash and PowerShell.
+
+=== Policy
+
+A rule describing when a runtime may start, remain active, drain, stop, or
+refuse new sessions.
+
+Example:
+
+----
+Ollama may run only while the authoritative LLM volume is mounted.
+----
+
+=== Evidence
+
+Observable facts that justify a lifecycle decision.
+
+Examples:
+
+* mounted volume exists
+* lease file exists
+* heartbeat is fresh
+* socket is `ESTAB`
+* socket is `SYN-RECV`
+* no live leases remain
+* no active sockets remain
+* PlantUML render succeeded
+
+=== Artifact
+
+A file produced by the workspace that may be used for review, validation, or
+documentation.
+
+Examples:
+
+* UML diagrams
+* rendered SVG files
+* validation documents
+* implementation deltas
+* design evolution documents
+
+=== Warrant
+
+A reasoned basis for trusting a state transition.
+
+Example:
+
+----
+The service was disabled because the LLM volume was mounted, no live leases
+remained, no ESTAB or SYN-RECV sockets existed, and the condition remained
+stable for the configured grace period.
+----
+
+== Core Relationships
+
+The domain relationships can be expressed as:
+
+----
+Workspace owns Runtime
+Runtime serves Session
+Session acquires Lease
+Lease records Evidence
+Coordinator evaluates Policy
+Policy governs Lifecycle Transition
+Lifecycle Transition requires Warrant
+Artifact records Evidence or Design Rationale
+----
+
+A more KIOS-oriented expression is:
+
+----
+A workspace transition is valid only when the coordinator can produce warrant
+from recorded evidence under the declared lifecycle policy.
+----
+
+== Lifecycle Model
+
+The lifecycle pattern discovered in this repository is:
+
+----
+Unavailable
+    ↓
+Available
+    ↓
+Enabled
+    ↓
+Running
+    ↓
+Draining
+    ↓
+Disabled
+----
+
+With an emergency transition:
+
+----
+Any Active State
+    ↓
+Authority Missing
+    ↓
+Fail Closed
+----
+
+In this repository, the authoritative resource is the mounted LLM volume.
+
+If the volume disappears, the runtime must fail closed.
+
+== Why Socket State Was Insufficient
+
+The original model treated socket activity as evidence of session activity.
+
+That model was incomplete.
+
+Socket state can identify active or connecting requests:
+
+[cols="1,2"]
+|===
+|Socket State |Meaning
+
+|ESTAB
+|Active request or response may be in progress
+
+|SYN-RECV
+|A new connection is being established; cleanup must wait
+
+|TIME-WAIT
+|A previous connection has closed; this alone is not a live client
+
+|No socket
+|There may still be an idle prompt session
+|===
+
+Therefore, socket state is useful evidence, but it is not sufficient evidence.
+
+The lease abstraction fills this gap.
+
+== Why This Matters for KIOS
+
+KIOS is concerned with provenance, governance, warrant, and disciplined
+reasoning over system state.
+
+This repository demonstrates those concerns in a small but concrete domain.
+
+The question is not simply:
+
+----
+Is Ollama running?
+----
+
+The KIOS-style question is:
+
+----
+Is Ollama allowed to be running, according to the declared workspace policy,
+given the current evidence?
+----
+
+Likewise, the shutdown question is not:
+
+----
+Are there no ESTAB sockets?
+----
+
+It is:
+
+----
+Is there sufficient warrant to conclude that no active session still depends
+on the shared runtime?
+----
+
+This is exactly the kind of reasoning KIOS should support.
+
+== Local Code and Test as a KIOS Domain
+
+The broader KIOS domain can be stated as:
+
+----
+Local Code and Test is the governed local workspace domain in which source code,
+runtime services, generated artifacts, validation evidence, and lifecycle
+policies are coordinated so that development actions remain reproducible,
+auditable, and explainable.
+----
+
+This domain includes:
+
+* local repositories
+* local execution environments
+* runtime services
+* shell sessions
+* containers
+* mounted volumes
+* generated artifacts
+* tests
+* validation scripts
+* documentation builds
+* local AI assistants and model servers
+
+== Candidate Domain Objects
+
+A first-pass domain model might include:
+
+[cols="1,3"]
+|===
+|Object |Description
+
+|Workspace
+|The bounded local environment under governance.
+
+|Repository
+|A versioned source and artifact store.
+
+|Runtime
+|A service used by the workspace.
+
+|Session
+|An active user or tool interaction.
+
+|Lease
+|A durable claim that a session holds against a runtime or resource.
+
+|Coordinator
+|The mechanism that evaluates evidence and enforces policy.
+
+|Policy
+|A declarative rule governing valid transitions.
+
+|Evidence
+|An observed fact used to justify a transition.
+
+|Artifact
+|A generated or curated file that records knowledge, output, or validation.
+
+|Validation
+|A procedure that tests whether implementation behavior matches policy.
+
+|Transition
+|A state change in the workspace lifecycle.
+
+|Warrant
+|The reasoned justification for accepting a transition.
+|===
+
+== Candidate Policies
+
+Example policies include:
+
+=== Runtime Authority Policy
+
+----
+A runtime may run only while its authoritative workspace resource is available.
+----
+
+=== Lease Protection Policy
+
+----
+A runtime must not be disabled while any live lease exists.
+----
+
+=== Socket Protection Policy
+
+----
+A runtime must not be disabled while active or connecting sockets exist.
+----
+
+=== Fail-Closed Policy
+
+----
+If the authoritative workspace resource disappears, the runtime must stop and
+new sessions must be refused.
+----
+
+=== Artifact Separation Policy
+
+----
+Generated artifacts should be distinguishable from canonical source artifacts.
+----
+
+=== Validation Policy
+
+----
+A lifecycle implementation may be promoted only when validation evidence exists
+for expected normal and failure modes.
+----
+
+== Evidence and Promotion
+
+This repository also demonstrates a possible KIOS promotion pattern:
+
+----
+Research Branch
+    ↓
+Design Evolution
+    ↓
+Implementation
+    ↓
+Validation Evidence
+    ↓
+Curated Canonical Structure
+    ↓
+Promotion to Development
+----
+
+The branch history itself becomes part of the evidence trail.
+
+Temporary artifacts may be removed or collapsed before merge, but their
+existence remains preserved in Git history.
+
+This separates:
+
+* historical provenance
+* current canonical repository structure
+
+== Design Lesson
+
+The most important lesson is that local development environments are not merely
+"developer convenience."
+
+They are governed systems.
+
+They contain:
+
+* resources
+* authority boundaries
+* state transitions
+* failure modes
+* evidence
+* policies
+* artifacts
+* histories
+
+Therefore, they are legitimate KIOS domains.
+
+== Suggested Next Step
+
+Create a canonical domain document, possibly:
+
+----
+DOMAIN.adoc
+----
+
+or:
+
+----
+docs/domain/local-code-and-test.adoc
+----
+
+This document should describe the stable vocabulary and relationships without
+being tied too closely to the current Ollama/WSL implementation.
+
+The current repository can then serve as the first concrete case study of the
+domain.
+
+== Conclusion
+
+The `ollama-under-WSL-dynamic` repository has become more than a utility
+project.
+
+It is now evidence for a KIOS domain concerned with governed local code and test
+workspaces.
+
+The immediate implementation solves a concrete problem:
+
+----
+shared Ollama lifecycle management under WSL
+----
+
+But the deeper architectural contribution is the emerging domain model:
+
+----
+Workspace + Runtime + Session + Lease + Policy + Evidence + Warrant
+----
+
+That model can likely generalize beyond Ollama, beyond WSL, and beyond this
+repository.

@@ -1,0 +1,257 @@
+= KIOS Domain Catalog
+:toc:
+:sectnums:
+
+KIOS is organized around domains.
+
+A domain is the primary unit of durable knowledge within KIOS. It defines a
+coherent body of concepts, relationships, policies, evidence, validation, and
+provenance concerning a particular subject.
+
+Implementations demonstrate domains.
+
+They do not define them.
+
+As implementations evolve, are replaced, or become obsolete, domains preserve
+the conceptual knowledge extracted from those implementations together with the
+reasoning that justifies it.
+
+Accordingly, KIOS is fundamentally a knowledge architecture rather than a
+software architecture.
+
+== Purpose
+
+The Domain Catalog serves as the canonical entry point into the KIOS domain
+architecture.
+
+Its purposes are to:
+
+* identify the canonical domains
+* provide stable identifiers
+* describe domain maturity
+* identify reference implementations
+* establish a common architectural vocabulary
+* organize future knowledge development
+
+== Domain Catalog
+
+[cols="1,3,4,3,2",options="header"]
+|===
+|ID
+|Domain
+|Purpose
+|Reference Implementation
+|Status
+
+|0001
+|Local Code and Test
+|Govern governed local development workspaces, runtime lifecycle,
+documentation, and validation.
+|ollama-under-WSL-dynamic
+|Reference Implementation
+
+|0002
+|AI Governance
+|Executable governance, policy reasoning, provenance, and compliance.
+|—
+|Concept
+
+|0003
+|Narrative Canon
+|Govern narrative knowledge, literary artifacts, and story consistency.
+|awake-in-omelas
+|Research
+
+|0004
+|Personal-Historical Realism
+|Reason about persons, history, philosophy, and evidence.
+|The God Field
+|Research
+|===
+
+== What Is a Domain?
+
+Every KIOS domain should eventually answer the same questions.
+
+[cols="1,3",options="header"]
+|===
+|Question
+|Answered By
+
+|What language does this domain use?
+|Vocabulary
+
+|What exists?
+|Concepts
+
+|How are those concepts related?
+|Relationships
+
+|What governs acceptable behavior?
+|Policies
+
+|What observations support claims?
+|Evidence
+
+|Why should those observations be trusted?
+|Warrant
+
+|How are claims verified?
+|Validation
+
+|What implementations demonstrate the model?
+|Reference Implementations
+
+|How did our understanding evolve?
+|Provenance
+|===
+
+== Canonical Domain Model
+
+Every mature KIOS domain is expected to describe these architectural elements.
+
+=== Vocabulary
+
+The canonical language of the domain.
+
+=== Concepts
+
+The primary entities of the domain.
+
+=== Relationships
+
+The semantic structure connecting concepts.
+
+=== Policies
+
+Declarative rules governing acceptable behavior and valid transitions.
+
+=== Evidence
+
+Observable facts supporting claims made by the domain.
+
+=== Warrant
+
+Reasoning that justifies conclusions drawn from evidence.
+
+=== Validation
+
+Procedures demonstrating that reasoning and implementations satisfy the
+declared policies.
+
+=== Reference Implementations
+
+Concrete systems demonstrating that the domain model is executable.
+
+Reference implementations produce evidence.
+
+They are not the domain.
+
+=== Provenance
+
+The historical record describing how the domain evolved.
+
+== Domain Lifecycle
+
+Domains mature through evidence.
+
+----
+Problem
+    ↓
+Observation
+    ↓
+Research
+    ↓
+Hypothesis
+    ↓
+Architecture
+    ↓
+Reference Implementation
+    ↓
+Validation
+    ↓
+Canonical Domain
+----
+
+Promotion between stages should always be justified by evidence and warrant.
+
+== Repository Organization
+
+A representative domain organization is:
+
+----
+domains/
+    README.adoc
+
+    <domain>/
+        0001-DOMAIN.adoc
+
+        concepts/
+        relationships/
+        policies/
+        validation/
+        implementations/
+        provenance/
+        artifacts/
+----
+
+The organization exists to preserve durable knowledge.
+
+It should not mirror implementation details unless those details themselves are
+part of the domain.
+
+== Architectural Principles
+
+KIOS is organized around several principles.
+
+=== Domains Are Durable
+
+Implementations evolve.
+
+Domains accumulate knowledge.
+
+=== Evidence Precedes Warrant
+
+Observations alone are insufficient.
+
+Reasoned justification is required before knowledge becomes canonical.
+
+=== Provenance Preserves Understanding
+
+Knowledge is not merely the current conclusion.
+
+Knowledge includes the history of how that conclusion was reached.
+
+=== Validation Produces Confidence
+
+Domains should be promoted only after sufficient validation has accumulated.
+
+=== Reference Implementations Produce Evidence
+
+Repositories demonstrate the usefulness of domains.
+
+They do not replace domains.
+
+== Long-Term Architecture
+
+KIOS naturally separates into three complementary layers.
+
+----
+Reference Implementations
+        │
+        ▼
+Canonical Domains
+        │
+        ▼
+KIOS Platform
+----
+
+Reference implementations generate evidence.
+
+Canonical domains synthesize durable knowledge from that evidence.
+
+The KIOS platform reasons over domains, evaluates evidence, enforces policy,
+preserves provenance, and assists users in constructing new knowledge.
+
+This separation allows implementations to evolve independently while preserving
+the long-term integrity of the knowledge architecture.
