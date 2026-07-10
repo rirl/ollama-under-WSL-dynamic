@@ -1,0 +1,338 @@
+# Research Request: Architectural Evaluation of Ollama Desktop
+
+## Objective
+
+I am designing a desktop AI platform currently called **Ollama Desktop**.
+
+The objective is to provide a single, authoritative local inference service capable of serving Windows 11, multiple WSL2 Linux distributions, Docker workloads, AI desktop applications, IDEs, MCP servers, and future local AI infrastructure.
+
+This is **not** an implementation question.
+
+Instead, I am requesting a comprehensive architectural evaluation of the proposed platform.
+
+Please evaluate the design as though performing a professional architecture review for a production-quality open-source infrastructure project.
+
+---
+
+# Problem Statement
+
+Current local AI workflows typically suffer from several issues:
+
+* Duplicate model repositories across Windows and multiple WSL distributions.
+* Multiple Ollama installations competing for the same resources.
+* Wasted disk space.
+* Complex lifecycle management.
+* Unclear ownership of GPU resources.
+* Difficulty integrating multiple AI applications.
+* Lack of governance regarding service ownership and execution.
+
+The goal of Ollama Desktop is to eliminate these problems by introducing a managed desktop inference platform.
+
+---
+
+# Proposed Vision
+
+The working concept is:
+
+* One shared model repository.
+* One authoritative Ollama inference service.
+* Multiple desktop clients.
+* Explicit lifecycle management.
+* Explicit ownership.
+* Shared GPU utilization.
+* Local-first operation.
+* Container-friendly deployment.
+* Future support for governance and orchestration.
+
+Windows, WSL distributions, IDEs, Open WebUI, MCP servers, scripting environments, and future AI applications should all consume the same inference service.
+
+---
+
+# Architectural Context
+
+Target environment:
+
+* Windows 11
+* WSL2
+* Docker Desktop
+* NVIDIA GPU (where available)
+* Shared storage (for example VHDX-backed model repository)
+* Ollama
+* Open WebUI
+* MCP tooling
+* Local AI development workflows
+
+The platform should emphasize:
+
+* simplicity,
+* reliability,
+* maintainability,
+* extensibility,
+* operational safety,
+* and excellent developer experience.
+
+---
+
+# Requested Evaluation
+
+Please perform a rigorous architectural analysis.
+
+Do not simply list advantages and disadvantages.
+
+Critically evaluate the architecture from multiple perspectives.
+
+---
+
+## 1. Overall Architecture
+
+Evaluate whether the concept is architecturally sound.
+
+Identify:
+
+* strengths,
+* weaknesses,
+* hidden assumptions,
+* missing components,
+* unnecessary complexity,
+* opportunities for simplification.
+
+---
+
+## 2. Execution Environment
+
+Evaluate possible execution models.
+
+Examples include:
+
+* native Windows service,
+* native WSL service,
+* Docker container,
+* Docker Compose,
+* hybrid approaches,
+* other alternatives.
+
+Recommend the most appropriate model.
+
+---
+
+## 3. Shared Model Repository
+
+Evaluate approaches for:
+
+* shared storage,
+* filesystem organization,
+* ownership,
+* locking,
+* concurrent access,
+* updates,
+* integrity,
+* portability.
+
+Discuss operational implications.
+
+---
+
+## 4. Lifecycle Management
+
+Evaluate whether the platform should manage:
+
+* service startup,
+* service shutdown,
+* model updates,
+* health monitoring,
+* crash recovery,
+* restart policies,
+* ownership transfer,
+* automatic recovery.
+
+Discuss implementation strategies.
+
+---
+
+## 5. Session and Lease Management
+
+The current design assumes:
+
+* multiple execution environments may contain an Ollama installation,
+* only one Ollama server is allowed to run globally,
+* ownership is enforced through a lease mechanism.
+
+Evaluate:
+
+* whether this is necessary,
+* whether it is sufficient,
+* whether superior alternatives exist.
+
+Challenge this assumption if appropriate.
+
+---
+
+## 6. Client Architecture
+
+Evaluate support for clients including:
+
+* Windows applications,
+* WSL distributions,
+* Open WebUI,
+* IDEs,
+* MCP servers,
+* AI coding assistants,
+* command-line tools,
+* automation.
+
+Should clients discover the service automatically?
+
+Should service discovery exist?
+
+How should connectivity be managed?
+
+---
+
+## 7. Docker Integration
+
+Evaluate Docker's role.
+
+Should Docker be:
+
+* optional,
+* recommended,
+* mandatory,
+* or avoided?
+
+Discuss trade-offs.
+
+---
+
+## 8. GPU Management
+
+Evaluate:
+
+* GPU ownership,
+* CUDA utilization,
+* memory management,
+* model loading,
+* multiple concurrent requests,
+* performance implications.
+
+---
+
+## 9. Failure Analysis
+
+Consider failures including:
+
+* Windows reboot,
+* WSL shutdown,
+* Docker restart,
+* service crash,
+* storage failure,
+* network failure,
+* GPU reset,
+* stale ownership records,
+* corrupted model repository.
+
+Describe recovery strategies.
+
+---
+
+## 10. Security
+
+Evaluate:
+
+* local API exposure,
+* authentication,
+* authorization,
+* filesystem permissions,
+* multi-user desktops,
+* container isolation,
+* Windows/WSL trust boundaries.
+
+---
+
+## 11. Extensibility
+
+Evaluate future integration with:
+
+* Open WebUI,
+* MCP,
+* containerized applications,
+* AI agents,
+* local orchestration,
+* remote inference,
+* Kubernetes,
+* distributed execution.
+
+Determine whether the architecture naturally supports future growth.
+
+---
+
+## 12. Governance
+
+Suppose this platform eventually becomes part of a governance-oriented architecture such as KIOS.
+
+Evaluate opportunities for:
+
+* policy enforcement,
+* provenance,
+* immutable configuration,
+* declarative lifecycle,
+* auditability,
+* execution governance.
+
+Would these capabilities naturally integrate with the platform?
+
+---
+
+## 13. Alternative Architectures
+
+Identify superior alternatives if they exist.
+
+Do not assume the proposed design is optimal.
+
+Compare with:
+
+* native installations,
+* Docker-first approaches,
+* microservice architectures,
+* orchestration platforms,
+* existing desktop inference platforms.
+
+---
+
+# Challenge the Design
+
+Please actively attempt to falsify this architecture.
+
+Identify:
+
+* misconceptions,
+* hidden assumptions,
+* unnecessary complexity,
+* scalability limitations,
+* operational hazards,
+* deployment risks,
+* maintenance burdens,
+* security concerns,
+* architectural dead ends.
+
+If portions of the design should be abandoned or replaced, explain why.
+
+---
+
+# Deliverable
+
+Produce a comprehensive architectural review suitable for an Architecture Decision Record (ADR).
+
+Conclude with:
+
+1. A recommended reference architecture.
+2. Architectural diagrams (ASCII or Mermaid where appropriate).
+3. Component descriptions.
+4. Major design decisions.
+5. Trade-off analysis.
+6. Risks.
+7. Recommended implementation roadmap.
+8. Migration strategy from simpler implementations.
+9. Areas requiring additional research.
+10. An overall assessment of whether Ollama Desktop represents a compelling open-source desktop AI platform.
+
+The analysis should be grounded in current Windows 11, WSL2, Docker Desktop, Ollama, GPU, and local AI ecosystem capabilities rather than theoretical assumptions. Where assumptions are made, clearly identify them and explain their impact on the conclusions.

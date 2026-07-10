@@ -1,0 +1,291 @@
+# Research Request: Architectural Evaluation of Docker Desktop MCP
+
+## Objective
+
+I am researching Docker Desktop's recently introduced **MCP (Model Context Protocol)** capabilities.
+
+This is **not** a request for an introduction to MCP.
+
+Instead, I want a deep architectural evaluation of Docker Desktop's implementation, capabilities, design goals, and strategic implications.
+
+The purpose is to determine whether Docker Desktop MCP should influence the architecture of an open-source desktop AI platform currently being designed under the working name **Ollama Desktop**, and later a governance-oriented AI platform called **KIOS**.
+
+Please assume no prior conclusion that Docker Desktop MCP is either beneficial or unnecessary.
+
+---
+
+# Background
+
+I am designing a local-first AI platform with the following long-term objectives:
+
+* Windows 11
+* WSL2
+* Docker Desktop
+* Ollama
+* Shared model repository
+* One managed inference service
+* Open WebUI
+* MCP tooling
+* Local AI development
+* AI coding assistants
+* Containerized AI workloads
+* Governance-oriented architecture (KIOS)
+
+While investigating this architecture I noticed Docker Desktop now exposes functionality labeled **MCP**.
+
+Before considering its adoption, I want to understand exactly what Docker has built, how it works, what problems it solves, and whether it aligns with the goals of Ollama Desktop.
+
+---
+
+# Requested Evaluation
+
+Please perform a professional architectural review.
+
+Do not summarize documentation.
+
+Instead, explain the architecture, implementation model, intended use cases, limitations, and strategic implications.
+
+Use authoritative technical sources including Docker documentation, release notes, engineering blogs, GitHub repositories, architecture discussions, and official MCP documentation where appropriate.
+
+---
+
+## 1. What is Docker Desktop MCP?
+
+Explain precisely:
+
+* what Docker Desktop MCP is,
+* why Docker introduced it,
+* what problem it is intended to solve,
+* what assumptions it makes.
+
+Avoid marketing terminology.
+
+Describe the architecture.
+
+---
+
+## 2. Relationship to the Official MCP Specification
+
+Explain:
+
+* which portions of the MCP specification Docker implements,
+* where Docker extends the protocol,
+* whether Docker introduces proprietary behaviors,
+* whether Docker is acting primarily as an MCP host, client, server, runtime, registry, execution environment, orchestration platform, or some combination.
+
+Clarify terminology carefully.
+
+---
+
+## 3. Internal Architecture
+
+Describe the internal architecture.
+
+Include:
+
+* lifecycle,
+* discovery,
+* registration,
+* execution,
+* networking,
+* transport,
+* configuration,
+* authentication,
+* authorization,
+* isolation,
+* observability,
+* logging,
+* debugging.
+
+Explain how MCP servers are actually started and managed.
+
+---
+
+## 4. Container Integration
+
+Evaluate:
+
+* how Docker containers participate,
+* whether MCP servers are containerized,
+* whether containers are optional,
+* how Docker Desktop manages container lifecycle,
+* interaction with Docker Compose,
+* interaction with Kubernetes,
+* interaction with existing Docker networking.
+
+---
+
+## 5. Tool Execution
+
+Explain:
+
+* how tools are registered,
+* how tools are discovered,
+* how requests are routed,
+* how multiple MCP servers coexist,
+* conflict resolution,
+* namespace management,
+* security implications.
+
+---
+
+## 6. Relationship to Ollama
+
+Evaluate possible integration with Ollama.
+
+For example:
+
+* Ollama inside Docker.
+* Ollama outside Docker.
+* Ollama as an MCP tool.
+* Ollama consumed by MCP servers.
+* AI agents using both Ollama and Docker Desktop MCP.
+
+Discuss realistic deployment models.
+
+---
+
+## 7. Relationship to Open WebUI
+
+Evaluate whether Docker Desktop MCP naturally complements Open WebUI.
+
+Could Docker Desktop become the preferred runtime for MCP servers consumed by Open WebUI?
+
+Discuss strengths and limitations.
+
+---
+
+## 8. Relationship to Ollama Desktop
+
+Suppose Ollama Desktop provides:
+
+* one shared inference service,
+* one shared model repository,
+* Windows and WSL clients,
+* Open WebUI,
+* AI assistants,
+* MCP servers,
+* local orchestration.
+
+Evaluate how Docker Desktop MCP fits into that architecture.
+
+Specifically discuss whether it could replace or simplify:
+
+* service discovery,
+* tool discovery,
+* lifecycle management,
+* container management,
+* MCP server execution,
+* orchestration,
+* desktop AI infrastructure.
+
+---
+
+## 9. Relationship to KIOS
+
+Suppose KIOS emphasizes:
+
+* immutable provenance,
+* executable governance,
+* declarative architecture,
+* policy enforcement,
+* canonical workflows,
+* durable knowledge.
+
+Evaluate whether Docker Desktop MCP could reasonably become:
+
+* an execution substrate,
+* a runtime,
+* a deployment mechanism,
+* a supporting component,
+* or merely an external integration point.
+
+---
+
+## 10. Security Evaluation
+
+Evaluate:
+
+* attack surface,
+* Docker socket implications,
+* privilege boundaries,
+* trust model,
+* authentication,
+* authorization,
+* secrets management,
+* container isolation,
+* desktop security.
+
+---
+
+## 11. Operational Evaluation
+
+Evaluate:
+
+* deployment complexity,
+* observability,
+* maintainability,
+* scalability,
+* portability,
+* developer experience,
+* ecosystem maturity,
+* operational risks.
+
+---
+
+## 12. Compare Alternatives
+
+Compare Docker Desktop MCP with alternatives including:
+
+* manually managed MCP servers,
+* native host execution,
+* standalone MCP runtimes,
+* Docker Compose,
+* Kubernetes,
+* custom orchestration,
+* traditional service-oriented architectures.
+
+---
+
+# Challenge the Assumptions
+
+Actively attempt to falsify the hypothesis that Docker Desktop MCP is strategically valuable.
+
+Identify:
+
+* misconceptions,
+* hidden assumptions,
+* architectural dead ends,
+* operational hazards,
+* vendor lock-in,
+* licensing concerns,
+* deployment limitations,
+* ecosystem immaturity,
+* situations where Docker Desktop MCP should **not** be used.
+
+Do not assume Docker Desktop MCP is the correct solution simply because it exists.
+
+---
+
+# Deliverable
+
+Produce a comprehensive architectural review suitable for an Architecture Decision Record (ADR).
+
+Conclude with:
+
+1. A concise explanation of what Docker Desktop MCP actually is.
+2. A clear architectural diagram of its internal model.
+3. A maturity assessment.
+4. Whether it is strategically relevant to Ollama Desktop.
+5. Whether it is strategically relevant to KIOS.
+6. Recommended adoption strategy:
+
+   * Ignore
+   * Monitor
+   * Experiment
+   * Adopt selectively
+   * Build around
+7. A phased adoption roadmap if appropriate.
+8. Open research questions requiring further investigation.
+
+The evaluation should emphasize architectural reasoning over feature enumeration and should clearly distinguish between current capabilities, experimental features, announced roadmaps, and informed speculation.
