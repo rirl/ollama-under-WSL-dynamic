@@ -1,0 +1,344 @@
+= Validation Plan 0001
+:subtitle: Shared Session Manager Reference Implementation
+:toc:
+:sectnums:
+
+This document defines the validation plan for the Shared Session Manager
+reference implementation developed within the Local Code and Test domain.
+
+The purpose of validation is not merely to determine whether the implementation
+"works," but to establish sufficient evidence and warrant that the
+implementation faithfully realizes the policies and concepts described by
+Domain 0001.
+
+== Scope
+
+This validation applies to the Shared Session Manager implementation contained
+within the `research/shared-session-manager` branch.
+
+The implementation includes:
+
+* shared lease management
+* coordinated Ollama lifecycle management
+* VHDX authority enforcement
+* cross-distribution coordination
+* Docker-based documentation tooling
+* associated documentation and architectural artifacts
+
+== Validation Objectives
+
+Validation seeks to establish confidence that:
+
+* the implementation behaves as described;
+* documented architectural invariants are preserved;
+* failure modes are safe;
+* implementation and documentation remain consistent;
+* the implementation provides a suitable reference implementation for Domain
+  0001.
+
+== Validation Philosophy
+
+Validation is evidence-driven.
+
+Individual tests do not establish confidence independently.
+
+Rather, confidence emerges from the accumulation of evidence across multiple
+dimensions, including:
+
+* implementation behavior;
+* documentation consistency;
+* operational behavior;
+* failure handling;
+* architectural consistency.
+
+The resulting evidence provides the warrant required for promotion.
+
+== Validation Principles
+
+The following principles govern all validation activities.
+
+. Validation establishes confidence rather than certainty.
+. Evidence shall be preserved whenever practical.
+. Observed behavior takes precedence over expected behavior.
+. Failures shall be documented before remediation.
+. Validation artifacts form part of the domain provenance.
+. Promotion decisions require both evidence and warrant.
+
+== Validation Categories
+
+=== Repository Integrity
+
+Purpose::
+
+Verify repository consistency before functional testing.
+
+Activities::
+
+* Git status
+* clean working tree
+* branch verification
+* syntax validation
+* module import validation
+
+Acceptance::
+
+Repository is internally consistent.
+
+=== Documentation Validation
+
+Purpose::
+
+Verify documentation accurately describes implementation.
+
+Artifacts reviewed::
+
+* README
+* LLM.adoc
+* validation.adoc
+* Domain 0001
+* Domain Catalog
+
+Acceptance::
+
+Implementation and documentation agree.
+
+=== Docker Tooling Validation
+
+Purpose::
+
+Validate PlantUML rendering infrastructure.
+
+Activities::
+
+* build container
+* start container
+* render SVG
+* render PNG
+* verify generated artifacts
+
+Known Issues::
+
+PDF rendering currently produces empty output and is tracked separately.
+
+Acceptance::
+
+SVG rendering succeeds for all canonical diagrams.
+
+=== Lease Management Validation
+
+Purpose::
+
+Verify shared lease lifecycle.
+
+Activities::
+
+* acquire lease
+* heartbeat
+* release lease
+* stale lease cleanup
+* multiple concurrent leases
+
+Acceptance::
+
+Lease registry accurately reflects active sessions.
+
+=== Socket State Validation
+
+Purpose::
+
+Verify socket observations are interpreted correctly.
+
+Activities::
+
+* ESTAB
+* SYN-RECV
+* TIME-WAIT
+* idle prompt
+
+Acceptance::
+
+Lifecycle decisions do not rely solely upon socket state.
+
+=== Lifecycle Validation
+
+Purpose::
+
+Validate service lifecycle.
+
+Activities::
+
+* enable
+* start
+* running
+* draining
+* stop
+* disable
+
+Acceptance::
+
+Lifecycle follows documented policy.
+
+=== VHDX Authority Validation
+
+Purpose::
+
+Verify mounted LLM volume remains authoritative.
+
+Activities::
+
+* mounted
+* unmounted
+* unexpected disappearance
+
+Acceptance::
+
+System fails closed when authority disappears.
+
+=== Multi-Distribution Validation
+
+Purpose::
+
+Verify coordination between multiple WSL distributions.
+
+Activities::
+
+* simultaneous sessions
+* independent shutdown
+* final cleanup
+
+Acceptance::
+
+Shared lease registry coordinates all participating distributions.
+
+=== Failure Mode Validation
+
+Purpose::
+
+Demonstrate safe behavior under abnormal conditions.
+
+Representative failures::
+
+* missing VHDX
+* stale lease
+* abrupt process termination
+* interrupted cleanup
+* concurrent shutdown
+
+Acceptance::
+
+Failure behavior matches documented policy.
+
+== Validation Matrix
+
+[cols="3,2,2,3",options="header"]
+|===
+|Category
+|Status
+|Evidence
+|Notes
+
+|Repository Integrity
+|
+|
+|
+
+|Documentation
+|
+|
+|
+
+|Docker Tooling
+|
+|
+|
+
+|Lease Management
+|
+|
+|
+
+|Socket State
+|
+|
+|
+
+|Lifecycle
+|
+|
+|
+
+|VHDX Authority
+|
+|
+|
+
+|Multi-Distribution
+|
+|
+|
+
+|Failure Modes
+|
+|
+|
+|===
+
+== Acceptance Criteria
+
+Validation is considered successful when:
+
+* all architectural invariants are preserved;
+* lease management behaves correctly;
+* lifecycle decisions are safe;
+* documented behavior matches observed behavior;
+* no critical defects remain unresolved;
+* known limitations are documented;
+* sufficient evidence exists to justify promotion consideration.
+
+== Known Deferred Items
+
+The following items are intentionally deferred:
+
+* PDF rendering investigation.
+* Docker file ownership refinement.
+* Additional documentation tooling enhancements.
+
+These items do not block validation of the Shared Session Manager architecture.
+
+== Deliverables
+
+Successful completion of this validation shall produce:
+
+* completed validation matrix;
+* validation results document;
+* promotion assessment;
+* recommendation regarding promotion to the development branch.
+
+== Relationship to Domain 0001
+
+This validation establishes confidence in the first reference implementation
+for the Local Code and Test domain.
+
+It therefore serves two purposes:
+
+. validating the implementation; and
+. validating the domain model itself.
+
+The resulting evidence contributes to the ongoing maturation of Domain 0001.
+
+== Next Document
+
+Upon completion of this plan, record the observed results in:
+
+----
+0002-VALIDATION-RESULTS.adoc
+----
+
+followed by:
+
+----
+0003-PROMOTION-ASSESSMENT.adoc
+----
+
+Only after those documents have been completed should promotion to the
+`development` branch be considered.
